@@ -85,6 +85,42 @@
 					<Enumeration value="7" label="ENUM_VALUE_7" />
 				</EnumerationList>
 			</EnumeratedParameterType>
+			<IntegerParameterType name="AIIM_PKT_ID_Type" signed="false">
+				<UnitSet />
+				<IntegerDataEncoding sizeInBits="16" />
+			</IntegerParameterType>
+			<IntegerParameterType name="AIIM_SEQ_NUM_Type" signed="false">
+				<UnitSet />
+				<IntegerDataEncoding sizeInBits="16" />
+			</IntegerParameterType>
+			<IntegerParameterType name="AIIM_EXP_Type" signed="false">
+				<UnitSet />
+				<IntegerDataEncoding encoding="unsigned" sizeInBits="4" />
+			</IntegerParameterType>
+			<IntegerParameterType name="AIIM_RESV_BYTE_Type" signed="false">
+				<UnitSet />
+				<IntegerDataEncoding encoding="unsigned" sizeInBits="8" />
+			</IntegerParameterType>
+			<IntegerParameterType name="AIIM_CTL_STATUS_Type" signed="false">
+				<UnitSet />
+				<IntegerDataEncoding encoding="unsigned" sizeInBits="8" />
+			</IntegerParameterType>
+			<AggregateParameterType name="AIIM_STATUS_PACKET_Type">
+				<MemberList>
+					<!-- <Member name="AIIM_ID" typeRef="AIIM_PKT_ID_Type" shortDescription="AiiM Message ID"/> -->
+					<Member name="AIIM_SEQ_NUMBER" typeRef="AIIM_SEQ_NUM_Type" shortDescription="AiiM Message Sequence Number"/>
+					<Member name="AIIM_EXP_7_STATUS" typeRef="AIIM_EXP_Type" shortDescription="AiiM Experiment #7 Status"/>
+					<Member name="AIIM_EXP_6_STATUS" typeRef="AIIM_EXP_Type" shortDescription="AiiM Experiment #6 Status"/>
+					<Member name="AIIM_EXP_5_STATUS" typeRef="AIIM_EXP_Type" shortDescription="AiiM Experiment #5 Status"/>
+					<Member name="AIIM_EXP_4_STATUS" typeRef="AIIM_EXP_Type" shortDescription="AiiM Experiment #4 Status"/>
+					<Member name="AIIM_EXP_3_STATUS" typeRef="AIIM_EXP_Type" shortDescription="AiiM Experiment #3 Status"/>
+					<Member name="AIIM_EXP_2_STATUS" typeRef="AIIM_EXP_Type" shortDescription="AiiM Experiment #2 Status"/>
+					<Member name="AIIM_EXP_1_STATUS" typeRef="AIIM_EXP_Type" shortDescription="AiiM Experiment #1 Status"/>
+					<Member name="AIIM_EXP_0_STATUS" typeRef="AIIM_EXP_Type" shortDescription="AiiM Experiment #0 Status"/>
+					<Member name="AIIM_CTL_RESERVED" typeRef="AIIM_RESV_BYTE_Type" shortDescription="AiiM Controller Reserved byte"/>
+					<Member name="AIIM_CTL_STATUS" typeRef="AIIM_CTL_STATUS_Type" shortDescription="AiiM Controller Status"/>
+				</MemberList>
+			</AggregateParameterType>
 		</ParameterTypeSet>
 		<ParameterSet>
 			<Parameter name="CCSDS_Packet_ID" parameterTypeRef="CCSDS_Packet_ID_Type" />
@@ -131,6 +167,9 @@
 			<Parameter name="Enum_Para_1" parameterTypeRef="EnumerationTest" />
 			<Parameter name="Enum_Para_2" parameterTypeRef="EnumerationTest" />
 			<Parameter name="Enum_Para_3" parameterTypeRef="EnumerationTest" />
+
+			<Parameter name="AIIM_STATUS_PACKET" parameterTypeRef="AIIM_STATUS_PACKET_Type" />
+			
 		</ParameterSet>
 		<ContainerSet>
 			<SequenceContainer abstract="true" name="CCSDSPacket">
@@ -212,6 +251,19 @@
 					</RestrictionCriteria>
 				</BaseContainer>
 			</SequenceContainer>
+			<SequenceContainer name="AIIM_PACKET">
+				<EntryList>
+					<ParameterRefEntry parameterRef="AIIM_STATUS_PACKET"></ParameterRefEntry>
+				</EntryList>
+				<BaseContainer containerRef="TelemetryPacket">
+					<RestrictionCriteria>
+						<ComparisonList>
+							<Comparison value="NotPresent" parameterRef="CCSDS_Packet_ID/SecHdrFlag" />
+							<Comparison value="300" parameterRef="CCSDS_Packet_ID/APID" />
+						</ComparisonList>
+					</RestrictionCriteria>
+				</BaseContainer>
+			</SequenceContainer>
 		</ContainerSet>
 		<AlgorithmSet>
 			<CustomAlgorithm name="copySunsensor">
@@ -265,6 +317,24 @@
 				<IntegerDataEncoding encoding="unsigned" sizeInBits="16" />
 				<ValidRangeSet>
 					<ValidRange minInclusive="1" maxInclusive="3" />
+				</ValidRangeSet>
+			</IntegerArgumentType>
+			<IntegerArgumentType name="AIIM_CMD_ID_Type" signed="false">
+				<UnitSet />
+				<IntegerDataEncoding encoding="unsigned" sizeInBits="16" />
+			</IntegerArgumentType>
+			<IntegerArgumentType name="AIIM_CMD_PARAMS_Type" signed="false">
+				<UnitSet />
+				<IntegerDataEncoding encoding="unsigned" sizeInBits="32" />
+				<!-- <ValidRangeSet> -->
+					<!-- <ValidRange minInclusive="1" maxInclusive="3" /> -->
+				<!-- </ValidRangeSet> -->
+			</IntegerArgumentType>
+			<IntegerArgumentType name="AIIM_CMD_Type" signed="false">
+				<UnitSet />
+				<IntegerDataEncoding encoding="unsigned" sizeInBits="8" />
+				<ValidRangeSet>
+					<ValidRange minInclusive="0" maxInclusive="255" />
 				</ValidRangeSet>
 			</IntegerArgumentType>
 		</ArgumentTypeSet>
@@ -355,6 +425,39 @@
 					<BaseContainer containerRef="MyProjectPacket" />
 				</CommandContainer>
 			</MetaCommand>
+			<!-- <MetaCommand name="aiimReboot">
+				<BaseMetaCommand metaCommandRef="MyProjectPacket">
+					<ArgumentAssignmentList>
+						<ArgumentAssignment argumentName="Packet_ID" argumentValue="4" />
+					</ArgumentAssignmentList>
+				</BaseMetaCommand>
+				<CommandContainer name="aiimReboot" shortDescription="AiiM Unit reboot">
+					<EntryList />
+					<BaseContainer containerRef="MyProjectPacket" />
+				</CommandContainer>
+				<DefaultSignificance consequenceLevel="vital" />
+			</MetaCommand> -->
+			<MetaCommand name="AIIM_COMMAND" shortDescription="Send AiiM Telecommand with main command 1 byte, sub-command 1 byte, and argument 4 byte">
+				<BaseMetaCommand metaCommandRef="MyProjectPacket">
+					<ArgumentAssignmentList>
+						<ArgumentAssignment argumentName="Packet_ID" argumentValue="0x200" />
+					</ArgumentAssignmentList>
+				</BaseMetaCommand>
+				<ArgumentList>
+					<!-- <Argument argumentTypeRef="AIIM_CMD_ID_Type" name="AIIM_CMD_ID" shortDescription="AiiM Command ID" /> -->
+					<Argument argumentTypeRef="AIIM_CMD_Type" name="AIIM_MAIN_CMD" shortDescription="AiiM Main Command" />
+					<Argument argumentTypeRef="AIIM_CMD_Type" name="AIIM_SUB_CMD" shortDescription="AiiM Sub Command" />
+					<Argument argumentTypeRef="AIIM_CMD_PARAMS_Type" name="AIIM_CMD_PARAMETERS" shortDescription="AiiM Command parameters" />
+				</ArgumentList>
+				<CommandContainer name="AIIM_Command">
+					<EntryList>
+						<ArgumentRefEntry argumentRef="AIIM_MAIN_CMD"></ArgumentRefEntry>
+						<ArgumentRefEntry argumentRef="AIIM_SUB_CMD"></ArgumentRefEntry>
+						<ArgumentRefEntry argumentRef="AIIM_CMD_PARAMETERS"></ArgumentRefEntry>
+					</EntryList>
+					<BaseContainer containerRef="MyProjectPacket"/>
+				</CommandContainer>
+			</MetaCommand>	
 		</MetaCommandSet>
 	</CommandMetaData>
 </SpaceSystem>
